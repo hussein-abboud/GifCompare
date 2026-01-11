@@ -41,6 +41,7 @@ class GifCompareApp(QMainWindow):
         self._flicker_timer = QTimer(self)
         self._flicker_timer.timeout.connect(self._on_flicker_tick)
         self._last_directory = str(Path.cwd())
+        self._previous_mode = OverlayMode.SIDE_BY_SIDE
 
         # Setup
         self.setStyleSheet(BRUTALIST_STYLE)
@@ -280,6 +281,16 @@ class GifCompareApp(QMainWindow):
         else:
             self._flicker_timer.stop()
 
+        # Handle checkerboard mode - grid controls checker size
+        if mode == OverlayMode.CHECKERBOARD:
+            self.grid_panel.setToolTip("Controls checkerboard tile size in this mode")
+        else:
+            self.grid_panel.setToolTip("")
+            # Uncheck grid when leaving checkerboard
+            if self._previous_mode == OverlayMode.CHECKERBOARD:
+                self.grid_panel.enable_check.setChecked(False)
+
+        self._previous_mode = mode
         self._update_display()
 
     def _on_flicker_tick(self):
@@ -294,6 +305,9 @@ class GifCompareApp(QMainWindow):
             if gt_frame is None and pred_frame is None:
                 return
 
+            # Update checkerboard size from grid panel
+            self.overlay_engine.checker_size = self.grid_panel.get_size()
+
             # Use whichever frame is available, or composite both
             if gt_frame is not None and pred_frame is not None:
                 result = self.overlay_engine.composite(gt_frame, pred_frame)
@@ -302,12 +316,13 @@ class GifCompareApp(QMainWindow):
             else:
                 result = pred_frame.copy()
 
-            # Apply grid overlay
-            self.grid_overlay.set_enabled(self.grid_panel.is_enabled())
-            self.grid_overlay.set_size(self.grid_panel.get_size())
-            self.grid_overlay.set_color(self.grid_panel.get_color())
-            self.grid_overlay.set_opacity(self.grid_panel.get_opacity())
-            result = self.grid_overlay.apply(result)
+            # Apply grid overlay (not in checkerboard mode - it has its own grid)
+            if self.overlay_engine.mode != OverlayMode.CHECKERBOARD:
+                self.grid_overlay.set_enabled(self.grid_panel.is_enabled())
+                self.grid_overlay.set_size(self.grid_panel.get_size())
+                self.grid_overlay.set_color(self.grid_panel.get_color())
+                self.grid_overlay.set_opacity(self.grid_panel.get_opacity())
+                result = self.grid_overlay.apply(result)
 
             self.viewport_widget.set_image(result)
         except Exception as e:
