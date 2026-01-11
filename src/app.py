@@ -399,7 +399,8 @@ class GifCompareApp(QMainWindow):
         dialog = DiscoveryDialog(base, gt_name, pred_name, self)
         dialog.folder_selected.connect(self._on_folder_selected)
         dialog.folders_selected.connect(self._on_folders_selected)
-        dialog.exec_()
+        dialog.setModal(False)
+        dialog.show()
 
     def _on_folder_selected(self, gt_path: str, pred_path: str):
         """Single folder selected - load for visual comparison."""
