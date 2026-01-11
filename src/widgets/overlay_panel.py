@@ -25,10 +25,22 @@ class OverlayModePanel(QWidget):
         # Left column
         left_layout = QVBoxLayout()
         self.normal_radio = QRadioButton("NORMAL")
+        self.normal_radio.setToolTip("Shows predicted frame only")
+
         self.dual_color_radio = QRadioButton("DUAL COLOR")
+        self.dual_color_radio.setToolTip(
+            "Converts both to grayscale, tints GT green and predicted magenta.\n"
+            "Where they match, colors blend to white/gray.\n"
+            "Green tint = GT brighter, magenta = predicted brighter."
+        )
+
         self.blend_radio = QRadioButton("BLEND 50%")
+        self.blend_radio.setToolTip("Blends both frames at 50% opacity each")
+
         self.side_by_side_radio = QRadioButton("SIDE BY SIDE")
+        self.side_by_side_radio.setToolTip("Ground truth on left, predicted on right")
         self.side_by_side_radio.setChecked(True)
+
         left_layout.addWidget(self.normal_radio)
         left_layout.addWidget(self.dual_color_radio)
         left_layout.addWidget(self.blend_radio)
@@ -37,8 +49,20 @@ class OverlayModePanel(QWidget):
         # Right column
         right_layout = QVBoxLayout()
         self.difference_radio = QRadioButton("DIFFERENCE")
+        self.difference_radio.setToolTip(
+            "Heatmap of absolute difference between frames.\n"
+            "Blue = identical, red = maximum difference."
+        )
+
         self.flicker_radio = QRadioButton("FLICKER")
+        self.flicker_radio.setToolTip("Rapidly alternates between GT and predicted to spot differences")
+
         self.checkerboard_radio = QRadioButton("CHECKERBOARD")
+        self.checkerboard_radio.setToolTip(
+            "Alternating tiles of GT and predicted with grid overlay.\n"
+            "Check alignment and local differences."
+        )
+
         right_layout.addWidget(self.difference_radio)
         right_layout.addWidget(self.flicker_radio)
         right_layout.addWidget(self.checkerboard_radio)

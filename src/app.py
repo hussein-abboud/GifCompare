@@ -381,49 +381,60 @@ class GifCompareApp(QMainWindow):
             QMessageBox.warning(self, "Error", "Failed to save GIF")
 
     def _open_discovery(self):
-        # Get current file path for pattern
-        current_path = self.pred_combo.currentText() or self.gt_combo.currentText()
+        # Get filenames from current paths
+        gt_path = self.gt_combo.currentText()
+        pred_path = self.pred_combo.currentText()
 
-        dialog = DiscoveryDialog(self._last_directory, "", self)
-        if current_path:
-            dialog.set_pattern_from_file(current_path)
+        gt_name = Path(gt_path).name if gt_path else ""
+        pred_name = Path(pred_path).name if pred_path else ""
 
-        dialog.files_selected.connect(self._on_discovery_selected)
+        # Determine base path (go up from current file location)
+        if gt_path and Path(gt_path).exists():
+            base = str(Path(gt_path).parent.parent)
+        elif pred_path and Path(pred_path).exists():
+            base = str(Path(pred_path).parent.parent)
+        else:
+            base = self._last_directory
+
+        dialog = DiscoveryDialog(base, gt_name, pred_name, self)
+        dialog.folder_selected.connect(self._on_folder_selected)
+        dialog.folders_selected.connect(self._on_folders_selected)
         dialog.exec_()
 
-    def _on_discovery_selected(self, paths: List[str]):
-        if not paths:
-            return
+    def _on_folder_selected(self, gt_path: str, pred_path: str):
+        """Single folder selected - load for visual comparison."""
+        if gt_path:
+            self.gt_combo.setCurrentText(gt_path)
+        if pred_path:
+            self.pred_combo.setCurrentText(pred_path)
 
-        if len(paths) == 1:
-            # Single selection - load as predicted
-            self.pred_combo.setCurrentText(paths[0])
-        else:
-            # Multiple selection - calculate averaged metrics
-            self._calculate_averaged_metrics(paths)
+    def _on_folders_selected(self, pairs: List[tuple]):
+        """Multiple folders selected - average metrics."""
+        self._calculate_averaged_metrics_pairs(pairs)
 
-    def _calculate_averaged_metrics(self, pred_paths: List[str]):
-        if self.gt_handler.get_frame_count() == 0:
-            QMessageBox.warning(self, "Warning", "Load ground truth first")
+    def _calculate_averaged_metrics_pairs(self, pairs: List[tuple]):
+        """Calculate averaged metrics from multiple (gt, pred) pairs."""
+        if not pairs:
             return
 
         progress = QProgressDialog("Calculating metrics...", "Cancel",
-                                  0, len(pred_paths), self)
+                                  0, len(pairs), self)
         progress.setWindowModality(Qt.WindowModal)
 
         all_metrics: List[SequenceMetrics] = []
         calculator = MetricsCalculator()
 
-        for i, path in enumerate(pred_paths):
+        for i, (gt_path, pred_path) in enumerate(pairs):
             if progress.wasCanceled():
                 return
             progress.setValue(i)
             QApplication.processEvents()
 
+            gt = GifHandler()
             pred = GifHandler()
-            if pred.load(path):
+            if gt.load(gt_path) and pred.load(pred_path):
                 seq_metrics, _ = calculator.calculate_sequence_metrics(
-                    self.gt_handler.frames, pred.frames
+                    gt.frames, pred.frames
                 )
                 all_metrics.append(seq_metrics)
 
@@ -435,7 +446,7 @@ class GifCompareApp(QMainWindow):
             self.tab_widget.setCurrentWidget(self.metrics_tab)
             QMessageBox.information(
                 self, "Averaged Metrics",
-                f"Averaged metrics from {len(all_metrics)} files"
+                f"Averaged metrics from {len(all_metrics)} folders"
             )
 
     def _calculate_metrics(self):
