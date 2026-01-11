@@ -54,6 +54,12 @@ class OverlayModePanel(QWidget):
             "Blue = identical, red = maximum difference."
         )
 
+        self.ssim_map_radio = QRadioButton("SSIM MAP")
+        self.ssim_map_radio.setToolTip(
+            "Local structural similarity heatmap.\n"
+            "Green = structurally similar, red = different."
+        )
+
         self.flicker_radio = QRadioButton("FLICKER")
         self.flicker_radio.setToolTip("Rapidly alternates between GT and predicted to spot differences")
 
@@ -64,9 +70,9 @@ class OverlayModePanel(QWidget):
         )
 
         right_layout.addWidget(self.difference_radio)
+        right_layout.addWidget(self.ssim_map_radio)
         right_layout.addWidget(self.flicker_radio)
         right_layout.addWidget(self.checkerboard_radio)
-        right_layout.addStretch()
 
         group_layout.addLayout(left_layout)
         group_layout.addLayout(right_layout)
@@ -77,10 +83,11 @@ class OverlayModePanel(QWidget):
         self.button_group.addButton(self.normal_radio, 0)
         self.button_group.addButton(self.dual_color_radio, 1)
         self.button_group.addButton(self.difference_radio, 2)
-        self.button_group.addButton(self.blend_radio, 3)
-        self.button_group.addButton(self.flicker_radio, 4)
-        self.button_group.addButton(self.checkerboard_radio, 5)
-        self.button_group.addButton(self.side_by_side_radio, 6)
+        self.button_group.addButton(self.ssim_map_radio, 3)
+        self.button_group.addButton(self.blend_radio, 4)
+        self.button_group.addButton(self.flicker_radio, 5)
+        self.button_group.addButton(self.checkerboard_radio, 6)
+        self.button_group.addButton(self.side_by_side_radio, 7)
         self.button_group.buttonClicked.connect(self._on_mode_changed)
 
         # Mode mapping
@@ -88,10 +95,11 @@ class OverlayModePanel(QWidget):
             0: OverlayMode.NORMAL,
             1: OverlayMode.DUAL_COLOR,
             2: OverlayMode.DIFFERENCE,
-            3: OverlayMode.BLEND,
-            4: OverlayMode.FLICKER,
-            5: OverlayMode.CHECKERBOARD,
-            6: OverlayMode.SIDE_BY_SIDE,
+            3: OverlayMode.SSIM_MAP,
+            4: OverlayMode.BLEND,
+            5: OverlayMode.FLICKER,
+            6: OverlayMode.CHECKERBOARD,
+            7: OverlayMode.SIDE_BY_SIDE,
         }
 
     def _on_mode_changed(self, button):

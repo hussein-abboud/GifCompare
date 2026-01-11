@@ -138,6 +138,8 @@ class ViewportWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._gt_path = ""
+        self._pred_path = ""
         self._setup_ui()
 
     def _setup_ui(self):
@@ -145,9 +147,26 @@ class ViewportWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
-        # Viewport
+        # Viewport container with path overlay
+        viewport_container = QWidget()
+        viewport_layout = QVBoxLayout(viewport_container)
+        viewport_layout.setContentsMargins(0, 0, 0, 0)
+        viewport_layout.setSpacing(0)
+
         self.viewport = Viewport()
-        layout.addWidget(self.viewport, 1)
+        viewport_layout.addWidget(self.viewport, 1)
+
+        # Path label overlay
+        self.path_label = QLabel()
+        self.path_label.setStyleSheet(
+            "color: #ff80ff; background: rgba(0,0,0,0.5); "
+            "padding: 2px 6px; font-size: 10px;"
+        )
+        self.path_label.setAlignment(Qt.AlignRight)
+        self.path_label.hide()
+        viewport_layout.addWidget(self.path_label)
+
+        layout.addWidget(viewport_container, 1)
 
         # Zoom controls
         zoom_layout = QHBoxLayout()
@@ -210,3 +229,23 @@ class ViewportWidget(QWidget):
 
     def set_image(self, image: np.ndarray):
         self.viewport.set_image(image)
+
+    def set_paths(self, gt_path: str, pred_path: str):
+        """Set and display the current file paths."""
+        self._gt_path = gt_path
+        self._pred_path = pred_path
+        self._update_path_label()
+
+    def _update_path_label(self):
+        """Update the path label display."""
+        parts = []
+        if self._gt_path:
+            parts.append(f"GT: {self._gt_path}")
+        if self._pred_path:
+            parts.append(f"PRED: {self._pred_path}")
+
+        if parts:
+            self.path_label.setText(" | ".join(parts))
+            self.path_label.show()
+        else:
+            self.path_label.hide()

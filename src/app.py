@@ -220,6 +220,7 @@ class GifCompareApp(QMainWindow):
         handler = self.gt_handler if target == "gt" else self.pred_handler
         if handler.load(path):
             self._update_after_load(target)
+            self._update_path_display()
 
     def _update_after_load(self, target: str):
         handler = self.gt_handler if target == "gt" else self.pred_handler
@@ -249,6 +250,12 @@ class GifCompareApp(QMainWindow):
 
         # Fit to view
         self.viewport_widget.viewport.fit_in_view()
+
+    def _update_path_display(self):
+        """Update the path display in viewport."""
+        gt_path = self.gt_combo.currentText()
+        pred_path = self.pred_combo.currentText()
+        self.viewport_widget.set_paths(gt_path, pred_path)
 
     def _on_frame_changed(self, frame: int):
         if self._updating:

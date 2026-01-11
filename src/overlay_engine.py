@@ -7,6 +7,7 @@ class OverlayMode(Enum):
     NORMAL = "normal"
     DUAL_COLOR = "dual_color"
     DIFFERENCE = "difference"
+    SSIM_MAP = "ssim_map"
     BLEND = "blend"
     FLICKER = "flicker"
     CHECKERBOARD = "checkerboard"
@@ -51,6 +52,8 @@ class OverlayEngine:
             return self._composite_dual_color(gt, pred)
         elif self.mode == OverlayMode.DIFFERENCE:
             return self._composite_difference(gt, pred)
+        elif self.mode == OverlayMode.SSIM_MAP:
+            return self._composite_ssim_map(gt, pred)
         elif self.mode == OverlayMode.BLEND:
             return self._composite_blend(gt, pred)
         elif self.mode == OverlayMode.FLICKER:
@@ -115,6 +118,33 @@ class OverlayEngine:
         result[:, :, 2] = np.clip((1 - diff_norm) * 255, 0, 255)  # Blue
         result[:, :, 3] = 255
         return result.astype(np.uint8)
+
+    def _composite_ssim_map(self, gt: np.ndarray, pred: np.ndarray) -> np.ndarray:
+        """Show local SSIM as heatmap. Green=similar, red=different."""
+        from skimage.metrics import structural_similarity as ssim
+
+        # Convert to grayscale
+        gt_gray = (0.299 * gt[:, :, 0] + 0.587 * gt[:, :, 1] + 0.114 * gt[:, :, 2]).astype(np.uint8)
+        pred_gray = (0.299 * pred[:, :, 0] + 0.587 * pred[:, :, 1] + 0.114 * pred[:, :, 2]).astype(np.uint8)
+
+        # Compute SSIM with local map
+        try:
+            _, ssim_map = ssim(gt_gray, pred_gray, data_range=255, full=True)
+        except Exception:
+            # Fallback if SSIM fails
+            return self._composite_difference(gt, pred)
+
+        # ssim_map values are -1 to 1, normalize to 0-1
+        ssim_norm = (ssim_map + 1) / 2
+        ssim_norm = np.clip(ssim_norm, 0, 1)
+
+        # Apply heatmap: green=1 (identical), red=0 (different)
+        result = np.zeros_like(gt)
+        result[:, :, 0] = ((1 - ssim_norm) * 255).astype(np.uint8)  # Red
+        result[:, :, 1] = (ssim_norm * 255).astype(np.uint8)  # Green
+        result[:, :, 2] = 0  # Blue
+        result[:, :, 3] = 255
+        return result
 
     def _composite_blend(self, gt: np.ndarray, pred: np.ndarray) -> np.ndarray:
         """Blend both frames at 50% opacity each."""

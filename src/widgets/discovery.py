@@ -83,6 +83,7 @@ class DiscoveryDialog(QDialog):
 
         self.results_list = QListWidget()
         self.results_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.results_list.itemDoubleClicked.connect(self._on_double_click)
         layout.addWidget(self.results_list)
 
         # Info label
@@ -186,6 +187,16 @@ class DiscoveryDialog(QDialog):
             self.results_list.addItem(item)
 
         self.results_label.setText(f"FOLDERS ({len(self._found_folders)} found)")
+
+    def _on_double_click(self, item):
+        """Double click loads for visual comparison."""
+        folder_name = item.data(Qt.UserRole)
+        if folder_name in self._found_folders:
+            gt_path, pred_path = self._found_folders[folder_name]
+            self.folder_selected.emit(
+                str(gt_path) if gt_path else "",
+                str(pred_path) if pred_path else ""
+            )
 
     def _compare(self):
         selected = self.results_list.selectedItems()
