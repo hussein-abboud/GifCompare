@@ -96,9 +96,9 @@ class DiscoveryDialog(QDialog):
         self.compare_btn.clicked.connect(self._compare)
         btn_layout.addWidget(self.compare_btn)
 
-        self.cancel_btn = QPushButton("CANCEL")
-        self.cancel_btn.clicked.connect(self.reject)
-        btn_layout.addWidget(self.cancel_btn)
+        self.close_btn = QPushButton("CLOSE")
+        self.close_btn.clicked.connect(self.accept)
+        btn_layout.addWidget(self.close_btn)
 
         layout.addLayout(btn_layout)
 
@@ -209,8 +209,6 @@ class DiscoveryDialog(QDialog):
                 if gt_path and pred_path:
                     pairs.append((str(gt_path), str(pred_path)))
             self.folders_selected.emit(pairs)
-
-        self.accept()
 
     def set_filenames(self, gt_name: str, pred_name: str):
         """Set the filenames to search for."""
