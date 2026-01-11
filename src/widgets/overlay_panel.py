@@ -172,6 +172,19 @@ class GridOverlayPanel(QWidget):
         opacity_layout.addStretch()
         group_layout.addLayout(opacity_layout)
 
+        # Thickness
+        thickness_layout = QHBoxLayout()
+        thickness_layout.addWidget(QLabel("THICKNESS:"))
+        self.thickness_spin = QSpinBox()
+        self.thickness_spin.setMinimum(1)
+        self.thickness_spin.setMaximum(10)
+        self.thickness_spin.setValue(1)
+        self.thickness_spin.setSuffix(" px")
+        self.thickness_spin.valueChanged.connect(self._on_change)
+        thickness_layout.addWidget(self.thickness_spin)
+        thickness_layout.addStretch()
+        group_layout.addLayout(thickness_layout)
+
         layout.addWidget(group)
 
     def _update_color_btn(self):
@@ -203,3 +216,6 @@ class GridOverlayPanel(QWidget):
 
     def get_opacity(self) -> float:
         return self.opacity_spin.value()
+
+    def get_thickness(self) -> int:
+        return self.thickness_spin.value()

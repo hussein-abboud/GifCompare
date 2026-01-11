@@ -21,6 +21,7 @@ class OverlayEngine:
         self.mode = OverlayMode.SIDE_BY_SIDE
         self.flicker_state = False
         self.checker_size = 32
+        self.grid_thickness = 1
         # Colors for dual-color mode (RGB)
         self.gt_color = (0, 255, 0)  # Green for ground truth
         self.pred_color = (255, 0, 255)  # Magenta for predicted
@@ -175,12 +176,27 @@ class OverlayEngine:
         grid_color = np.array([80, 80, 80, 255], dtype=np.uint8)
         # Vertical lines
         for x in range(0, w, self.checker_size):
-            if x < w:
-                result[:, x, :] = grid_color
+            x_end = min(x + self.grid_thickness, w)
+            result[:, x:x_end, :] = grid_color
         # Horizontal lines
         for y in range(0, h, self.checker_size):
-            if y < h:
-                result[y, :, :] = grid_color
+            y_end = min(y + self.grid_thickness, h)
+            result[y:y_end, :, :] = grid_color
+
+        # Mark predicted tiles with magenta dot in corner
+        dot_size = max(3, self.checker_size // 10)
+        magenta = np.array([255, 80, 255, 255], dtype=np.uint8)
+
+        for ty in range(int(np.ceil(h / self.checker_size))):
+            for tx in range(int(np.ceil(w / self.checker_size))):
+                if (ty + tx) % 2 == 1:  # Predicted tile
+                    # Draw dot in top-left corner of tile
+                    y_start = ty * self.checker_size + 2
+                    x_start = tx * self.checker_size + 2
+                    y_end = min(y_start + dot_size, h)
+                    x_end = min(x_start + dot_size, w)
+                    if y_start < h and x_start < w:
+                        result[y_start:y_end, x_start:x_end, :] = magenta
 
         return result
 
@@ -204,6 +220,7 @@ class GridOverlay:
         self.size = 32
         self.color = (128, 128, 128)
         self.opacity = 0.5
+        self.thickness = 1
 
     def apply(self, frame: np.ndarray) -> np.ndarray:
         """Apply grid overlay to frame."""
@@ -212,20 +229,19 @@ class GridOverlay:
 
         result = frame.copy().astype(np.float32)
         h, w = frame.shape[:2]
+        alpha = self.opacity
 
         # Draw vertical lines
         for x in range(0, w, self.size):
-            if x < w:
-                alpha = self.opacity
-                for c in range(3):
-                    result[:, x, c] = result[:, x, c] * (1 - alpha) + self.color[c] * alpha
+            x_end = min(x + self.thickness, w)
+            for c in range(3):
+                result[:, x:x_end, c] = result[:, x:x_end, c] * (1 - alpha) + self.color[c] * alpha
 
         # Draw horizontal lines
         for y in range(0, h, self.size):
-            if y < h:
-                alpha = self.opacity
-                for c in range(3):
-                    result[y, :, c] = result[y, :, c] * (1 - alpha) + self.color[c] * alpha
+            y_end = min(y + self.thickness, h)
+            for c in range(3):
+                result[y:y_end, :, c] = result[y:y_end, :, c] * (1 - alpha) + self.color[c] * alpha
 
         return result.astype(np.uint8)
 
@@ -240,3 +256,6 @@ class GridOverlay:
 
     def set_opacity(self, opacity: float):
         self.opacity = max(0.0, min(1.0, opacity))
+
+    def set_thickness(self, thickness: int):
+        self.thickness = max(1, thickness)

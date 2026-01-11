@@ -305,8 +305,9 @@ class GifCompareApp(QMainWindow):
             if gt_frame is None and pred_frame is None:
                 return
 
-            # Update checkerboard size from grid panel
+            # Update checkerboard size and thickness from grid panel
             self.overlay_engine.checker_size = self.grid_panel.get_size()
+            self.overlay_engine.grid_thickness = self.grid_panel.get_thickness()
 
             # Use whichever frame is available, or composite both
             if gt_frame is not None and pred_frame is not None:
@@ -322,6 +323,7 @@ class GifCompareApp(QMainWindow):
                 self.grid_overlay.set_size(self.grid_panel.get_size())
                 self.grid_overlay.set_color(self.grid_panel.get_color())
                 self.grid_overlay.set_opacity(self.grid_panel.get_opacity())
+                self.grid_overlay.set_thickness(self.grid_panel.get_thickness())
                 result = self.grid_overlay.apply(result)
 
             self.viewport_widget.set_image(result)
